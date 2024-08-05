@@ -8,18 +8,14 @@ require('dotenv').config(); // Chargement des variables d'environnement
 const cors = require('cors');
 const app = express();
 app.use(express.json());
-app.use(cors({
-  origin: 'http://localhost:8080', // Allow requests from the Vue.js app
-  methods: ['GET', 'POST', 'PUT', 'DELETE'], // Allow these HTTP methods
-  allowedHeaders: ['Content-Type', 'Authorization'] // Allow these headers
-}));
+app.use(cors());
 
 
 // Connexion à la base de données
 const pool = new Pool({
   host: 'localhost',
   user: 'postgres',
-  password: 'maffmaff',
+  password: '771817',
   database: 'MonProjet',
   port: 5432
 });
