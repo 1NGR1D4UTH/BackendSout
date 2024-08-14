@@ -15,8 +15,8 @@ app.use(cors());
 const pool = new Pool({
   host: 'localhost',
   user: 'postgres',
-  password: 'maffmaff',
-  database: 'MonProjet',
+  password: '771817',
+  database: 'ingride',
   port: 5432
 });
 
@@ -42,12 +42,12 @@ app.post('/signup', async (req, res) => {
     const dbConnection = getDbConnection();
     const { rows } = await dbConnection.query(query, values);
     const createdUserId = rows[0].id;
-    
-    res.status(201).json({ message: 'Utilisateur créé avec succès',  createdUserId });
+
+    res.status(201).json({ message: 'Utilisateur créé avec succès', createdUserId });
   } catch (error) {
     handleError(error, res);
   }
-  
+
 });
 
 // Route de connexion (login)
@@ -65,7 +65,11 @@ app.post('/login', async (req, res) => {
 
       if (isPasswordValid) {
         const token = jwt.sign({ userId: user.id }, '77181753');
-        res.json({ token });
+        const userId = user.id;
+
+        // Stockage de l'ID de l'utilisateur dans le localStorage
+        res.json({ token, userId });
+        console.log(user.id);
       } else {
         res.status(401).json({ message: 'Mot de passe incorrect' });
       }
@@ -98,26 +102,27 @@ app.post('/comment', authenticateToken, async (req, res) => {
 });
 
 // Route pour ajouter un employé
+// Dans votre endpoint /addEmploye
 app.post('/addEmploye', async (req, res) => {
-  const { username, surname, date_naissance, sexe, contact, email, localisation, type_u, password } = req.body;
-  const id= uuidv4();
-  const admin_id = req.user.userId; // Récupérer l'ID de l'admin à partir du token
-  const saltRounds= 13;
-  const hashedPassword= await bcrypt.hash(password, saltRounds);
+  const { id_admin, username, surname, date_naissance, sexe, contact, email, localisation, type_u, password, create_by } = req.body;
+  const id = uuidv4();
+  const saltRounds = 13;
+  const create_at = new Date();
+  const update_at = new Date();
+  const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-  const query = 'INSERT INTO employe (id, id_admin, nom, prénom, date_naissance,  téléphone, email, localisation, type_utilisateur, password, create_at, update_at, create_by) VALUES ($1, $2, $3,$4, $5, $6,$7, $8, $9, $10, $11, $12, $13, $14) RETURNING id';
-  const values = [id, id_admin, username, surname, date_naissance, contact, email, localisation, hashedPassword, create_at, update_at, create_by];
-    try {
-      const dbEnregistrement = getDbEnregistrement();
-      const { rows } = await dbEnregistrement.query(query, values);
-      const createdUserId = rows[0].id;
-      
-      res.status(201).json({ message: 'Employé ajouté avec succès',  createdUserId });
-    } catch (error) {
-      handleError(error, res);
-    }
-    
-  });
+  const query = 'INSERT INTO employe (id, id_admin, nom, prénom, date_naissance, sexe, téléphone, email, localisation, type_utilisateur, password, create_at, update_at, create_by) VALUES ($1, $2, $3,$4, $5, $6,$7, $8, $9, $10, $11, $12, $13, $14) RETURNING id';
+  const values = [id, id_admin, username, surname, date_naissance,sexe, contact, email, localisation, type_u, hashedPassword, create_at, update_at, create_by];
+  try {
+    const dbConnection = getDbConnection();
+    const { rows } = await dbConnection.query(query, values);
+    const createdUserId = rows[0].id;
+
+    res.status(201).json({ message: 'Employé ajouté avec succès' });
+  } catch (error) {
+    handleError(error, res);
+  }
+});
 // Route protégée
 app.get('/protected', authenticateToken, (req, res) => {
   res.json({ message: 'Route protégée accessible avec succès', user: req.user });
