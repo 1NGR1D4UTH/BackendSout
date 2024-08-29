@@ -111,14 +111,22 @@ app.post('/addClient', async (req, res) => {
   const update_at = new Date();
   const hashedPassword = await bcrypt.hash(mot_de_passe, saltRounds);
   
+  // Vérification du format de date
+  if (!/^(\d{4})-(\d{2})-(\d{2})$/.test(date_naissance)) {
+    return res.status(400).json({ message: 'Format de date invalide pour date_naissance' });
+  }
 
-  const query = 'INSERT INTO client (id, nom, prenom, date_naissance, lieu_naissance, telephone, email, sexe, localisation, mot_de_passe, create_at, update_at, create_by) VALUES ($1, $2, $3,$4, $5, $6,$7, $8, $9, $10, $11, $12, $13) RETURNING id';
-  const values = [id, nom, prenom, date_naissance, lieu_naissance, telephone, email, sexe, localisation, mot_de_passe, create_at, update_at, create_by];
+  const dateNaissance = new Date(date_naissance);
+  if (isNaN(dateNaissance.getTime())) {
+    return res.status(400).json({ message: 'Date de naissance invalide' });
+  }
+
+  const query = 'INSERT INTO client (id, nom, prenom, date_naissance, lieu_naissance, telephone, email, sexe, localisation, mot_de_passe, create_at, update_at, create_by) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING id';
+  const values = [id, nom, prenom, dateNaissance, lieu_naissance, telephone, email, sexe, localisation, hashedPassword, create_at, update_at, create_by];
+
   try {
     const dbConnection = getDbConnection();
     const { rows } = await dbConnection.query(query, values);
-    const createdUserId = rows[0].id;
-
     res.status(201).json({ message: 'Employé ajouté avec succès' });
   } catch (error) {
     handleError(error, res);
