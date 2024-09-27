@@ -1,0 +1,255 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum etatCommande {
+  EN_ATTENTE
+  En_COUR
+  TERMINEE
+  LIVRER
+}
+
+enum type{
+  COUTURIER
+  EMPLOYER
+  CLIENT
+}
+
+enum morphologie{
+  ENFANT
+  FEMME
+  HOMME
+}
+
+// enum sexe{
+//   MASCULIN
+//   FEMININ
+// }
+
+model User{
+
+id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid 
+nom           String
+prenom        String?
+dateNaissance DateTime
+phoneNumberU  String    @unique
+mail          String    @unique
+password      String?
+sexe          String 
+localisation  String
+avatar        String?
+createBy      String?
+status        type?     @default(COUTURIER)
+Catalogue     Catalogue[]
+Client        Client[]
+Employer      Employer[]
+dateCreate    DateTime  @default(now())
+dateUpdate    DateTime  @updatedAt
+isdelete      Boolean   @default(false)
+
+@@map("users")
+}
+
+
+model Client{
+  id            String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId        String
+  user          User          @relation(fields: [userCreated], references: [id])
+  userCreated   String        @db.Uuid
+  status        type?         @default(CLIENT)
+  morphologie   morphologie
+  MesureHaut    MesureHaut[]
+  MesureBas     MesureBas[]
+  PrendreMesure PrendreMesure[]
+  Commande      Commande[]
+  dateCreate    DateTime  @default(now())
+  dateUpdate    DateTime  @updatedAt
+  isdelete      Boolean         @default(false)
+
+@@map("clients")
+}
+
+model Employer{
+  id            String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId        String
+  user          User          @relation(fields: [userCreated], references: [id])
+  userCreated   String        @db.Uuid
+  status        type?         @default(EMPLOYER)
+  MesureBas     MesureBas[]
+  MesureHaut    MesureHaut[]
+  PrendreMesure PrendreMesure[]
+  Commande      Commande[]
+  dateCreate    DateTime  @default(now())
+  dateUpdate    DateTime  @updatedAt
+  isdelete      Boolean       @default(false)
+
+  @@map("employers")
+}
+
+model Catalogue{
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nomC            String
+  libelleC        String
+  user            User      @relation(fields: [userCreated], references: [id])
+  userCreated     String    @db.Uuid
+  Modele          Modele[]
+  dateCreate    DateTime  @default(now())
+  dateUpdate    DateTime  @updatedAt
+  isdelete        Boolean   @default(false)
+
+  @@map("catalogues")
+}
+
+
+model Modele{
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nom            String
+  libelle        String
+  catalogue     Catalogue  @relation(fields: [catalogueId],references: [id])
+  catalogueId   String     @db.Uuid
+  Commande      Commande[]
+  dateCreate    DateTime  @default(now())
+  dateUpdate    DateTime  @updatedAt
+  isdelete      Boolean    @default(false)
+
+  @@map("modeles")
+}
+
+model PrendreMesure{
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  client        Client    @relation(fields: [clientId], references: [id])
+  clientId      String    @db.Uuid
+  employer      Employer  @relation(fields: [employerId], references: [id])
+  employerId    String    @db.Uuid
+  Commande      Commande[]
+  dateCreate    DateTime  @default(now())
+  dateUpdate    DateTime  @updatedAt
+  isDelete      Boolean   @default(false)
+  MesureBas MesureBas[]
+  MesureHaut MesureHaut[]
+  @@map("prendreMesures")
+}
+
+model MesureHaut{
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  client       Client   @relation(fields: [clientId], references: [id])
+  clientId     String   @db.Uuid
+  employer     Employer @relation(fields: [employerId], references: [id])
+  employerId   String   @db.Uuid
+  epaule       Int
+  poitrine     Int
+  dos          Int
+  hautSein     Int?
+  tourSien     Int?
+  carrureDos   Int
+  carrureAvant Int
+  ventre       Int
+  taille       Int
+  lTaille      Int
+  lTotal       Int
+  bassin       Int
+  lManche      Int
+  tManche      Int
+  tPoignet     Int
+  col          Int
+  nDePoches    Int
+ prendreMesure   PrendreMesure @relation(fields: [prendreMesureId],references: [id])
+  prendreMesureId String        @db.Uuid
+  dateCreate    DateTime  @default(now())
+  dateUpdate    DateTime  @updatedAt
+  isDelete     Boolean  @default(false)
+
+@@map("mesureHauts")
+}
+
+model MesureBas{
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  client      Client    @relation(fields: [clientId], references: [id])
+  clientId    String    @db.Uuid
+  employer    Employer  @relation(fields: [employerId], references: [id])
+  employerId  String    @db.Uuid
+  taille      Int
+  bassin      Int
+  fesses      Int
+  cuisse      Int
+  longueur    Int
+  fond        Int
+  braquette   Int?
+  pied        Int
+  nDePoches   Int
+ prendreMesure   PrendreMesure @relation(fields: [prendreMesureId],references: [id])
+  prendreMesureId String        @db.Uuid
+  dateCreate    DateTime  @default(now())
+  dateUpdate    DateTime  @updatedAt
+  isDelete    Boolean    @default(false)
+
+  @@map("mesureBass")
+}
+
+model Produit{
+  id      String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name    String
+  libelle String
+  Qte     Int
+  stock   Stock     @relation(fields: [stockId],references: [id]) 
+  stockId  String   @db.Uuid
+  Commande Commande[]
+  dateCreate    DateTime  @default(now())
+  dateUpdate    DateTime  @updatedAt
+  isDelete Boolean   @default(false)
+
+@@map("produits")
+}
+
+
+model Stock{
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nameStock String
+  libelle   String
+  qteStock  Int
+  Produit   Produit[]
+  dateCreate    DateTime  @default(now())
+  dateUpdate    DateTime  @updatedAt
+  isDelete  Boolean    @default(false)
+
+  @@map("stocks")
+}
+
+model Commande{
+  id              String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name            String
+  libelle         String
+  status          etatCommande?  @default(EN_ATTENTE)
+  prendreMesure   PrendreMesure? @relation(fields: [prendreMesureId],references: [id])
+  prendreMesureId String?        @db.Uuid
+  modele          Modele        @relation(fields: [modeleId],references: [id])
+  modeleId        String        @db.Uuid
+  produit         Produit       @relation(fields: [produitId],references: [id])
+  produitId       String        @db.Uuid
+  client          Client        @relation(fields: [clientId],references: [id])
+  clientId        String        @db.Uuid
+  employer        Employer      @relation(fields: [employerId],references: [id])
+  employerId      String        @db.Uuid
+  montVerse       Int
+  montRestant     Int
+  dateStart       DateTime
+  dateEnd         DateTime
+  dateCreate      DateTime      @default(now())
+  dateUpdate      DateTime      @updatedAt
+  isDelete        Boolean ?      @default(false)
+
+  @@map("commandes")
+}
+
+

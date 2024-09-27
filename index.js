@@ -1,21 +1,34 @@
 const express = require('express');
+
+//initialisation de app
+const app = express();
+
+// Démarrage du serveur
+const port = process.env.PORT || 3000;
+
+
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const authenticateToken = require('./authMiddleware')
 const { v4: uuidv4 } = require('uuid');
 const { Pool } = require('pg');
 require('dotenv').config(); // Chargement des variables d'environnement
+
 const cors = require('cors');
-const app = express();
-app.use(express.json());
 app.use(cors());
+app.use(express.json());
+
+app.listen(port, () => {
+  console.log(`Le serveur est en cours d'exécution sur le port ${port}`);
+});
+
 
 
 // Connexion à la base de données
 const pool = new Pool({
   host: 'localhost',
   user: 'postgres',
-  password: '771817',
+  password: '2609',
   database: 'MonProjet',
   port: 5432
 });
@@ -79,6 +92,11 @@ app.post('/login', async (req, res) => {
   } catch (error) {
     handleError(error, res);
   }
+});
+
+// Route protégée
+app.get('/protected', authenticateToken, (req, res) => {
+  res.json({ message: 'Route protégée accessible avec succès', user: req.user });
 });
 
 // Route pour ajouter un employé
@@ -165,13 +183,3 @@ app.get('/user', async (req, res) => {
       res.status(500).json({ message: 'Erreur interne du serveur' });
   }
 })
-// Route protégée
-app.get('/protected', authenticateToken, (req, res) => {
-  res.json({ message: 'Route protégée accessible avec succès', user: req.user });
-});
-
-// Démarrage du serveur
-const port = process.env.PORT || 3000;
-app.listen(port, () => {
-  console.log(`Le serveur est en cours d'exécution sur le port ${port}`);
-});
